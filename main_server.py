@@ -22,11 +22,17 @@ while True:
     client_socket, client_address = server_socket.accept()
     print('Connected to {}:{}'.format(*client_address))
 
-    try:
-        # Receive data from the client
-        data = client_socket.recv(1024)
-        print('Received data: {}'.format(data.decode()))
+    
+    while True:
+        try:
+            # Receive data from the client
+            data = client_socket.recv(1024)
+            print('Received data: {}'.format(data.decode()))
+            if not data:
+                break
+        except:
+            # Add error handling later
+            break
 
-    finally:
-        # Close the client socket
-        client_socket.close()
+    
+    client_socket.close()
