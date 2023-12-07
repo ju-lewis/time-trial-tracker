@@ -1,0 +1,29 @@
+Current Problem:
+
+The GPS unit we currently have (Columbus P-7 Pro) is a USB device.
+This means that it is exceptionally difficult to manage via a
+microcontroller as it requires USB host capabilities. There are several 
+potential fixes here:
+
+1 - The easy (inefficient/overkill) method:
+	- I currently have several microcontrollers that I could use for This
+	project, however they are very difficult to utilise USB host with. This
+	could be fixed by using a significantly more powerful RPI Zero board.
+	This has native USB Host (that would immediately work) however, is
+	extremely overkill for a small data-logging box, and would make the 
+	least sense as a commercial solution at ~$50 AUD per board!!
+
+2 - The difficult (but efficient/cleanest) method:
+	- I could 'bite the bullet' and write custom software to act as a USB
+	host for the Teensy 4.0 microcontroller. This would be cheap, efficient
+	and commercially viable, as it's a small yet capable board.
+
+3 - The easiest (expensive/unfeasible) method:
+	- We could find another sub-metre accuracy GPS device that DOESN'T use
+	the USB protocol to communicate (UART is another standard that would be 
+	far easier to work with). However, it is likely to be very difficult 
+	to find another GPS unit that fits this criteria, and would probably
+	be quite expensive.
+
+I'm leaning towards option 2, as it's the 'best practice' approach to this
+problem, however would likely be a several month endeavour.
