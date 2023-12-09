@@ -1,0 +1,57 @@
+'''
+
+    Rasberry Pi Python GPS Read test
+
+'''
+
+import serial
+import os
+
+Configure the serial port
+port = serial.Serial('COM5', baudrate=57600, timeout=0.2)
+
+def DM_to_DEG(lat, lon):
+    '''Takes lat, lon as str returns deg str'''
+
+    lat_integer_degrees = int(lat[0:2])
+    lat_minutes = float(lat[2:])
+
+
+
+    lon_integer_degrees = int(lon[0:3])
+    lon_minutes = float(lon[3:])
+
+
+    return lat_integer_degrees + (lat_minutes / 60), lon_integer_degrees + (lon_minutes / 60)
+
+
+sentence = b""
+
+while True:
+    # Read incoming data
+    data = port.read()
+
+Check if any data is available
+    if data and data != b'\n' and data != b'\r':
+        sentence += data
+    elif data == b'\n':
+        # Sentence complete
+        sentence = sentence.decode()
+        data_list = sentence.split(",")
+
+Ignore everything except main positioning data
+        if data_list[0] != "$GNRMC":
+            pass
+            #sentence = b""
+            #continue
+
+Skip if position hasn't been obtained yet
+        if data_list[2] == "V":
+            os.system('cls')
+            print("Positioning not obtained yet!", data_list[1])
+            sentence = b""
+            continue
+
+
+        print(sentence)
+        sentence = b""
