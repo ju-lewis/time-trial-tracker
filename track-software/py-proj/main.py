@@ -55,10 +55,10 @@ def read_points(point_list):
 def DDM_deg_min_sec(ddm: str) -> float:
     # Example input format: 'ddmm.mmmmmmm' or 'dddmm.mmmmmmm'
     # Extract degrees and decimal minutes parts
-    if len(ddm) == 10:  # 'ddmm.mmmmmmm'
+    if len(ddm) == 11:  # 'ddmm.mmmmmmm'
         degrees = int(ddm[:2])
         minutes = float(ddm[2:])
-    elif len(ddm) == 11:  # 'dddmm.mmmmmmm'
+    elif len(ddm) == 12:  # 'dddmm.mmmmmmm'
         degrees = int(ddm[:3])
         minutes = float(ddm[3:])
     else:
@@ -110,14 +110,14 @@ def render(point_list) -> str:
 
     buffer += f"{'[Press q to Save and Exit]   [Press x to Enter Delete Mode]   [Press ENTER to Log a New Point]': ^{WIDTH}}\n\n"
     
-    buffer += "\n Points Recorded This Run:\n\n"
+    buffer += "\n Points Recorded This Run (Format is either DDMMSS.SSSS or DDDMMSS.SSSS):\n\n"
     # Get longest name for neat buffer formatting
     if len(point_list) > 0:
         longest_name = max([len(point['name']) for point in point_list])
     else:
         longest_name = 0
     
-    formatted_p_l = "\n".join([f"[white]{idx+1}. Name: [green]{point['name']: <{longest_name}}  [white]Latitude: [green]{point['lat']}   [white]Longitude: [green]{point['lon']}"
+    formatted_p_l = "\n".join([f"[white]{idx+1}. Name: [green]{point['name']: <{longest_name}}  [white]Latitude: [green]{point['Lat']}   [white]Longitude: [green]{point['Long']}"
                                for idx, point in enumerate(point_list)])
 
     buffer += f"{formatted_p_l}"
@@ -171,7 +171,7 @@ def new_point(point_list : list, port) -> None:
     if point_name == 'exit':
         return
     
-    point_list.append({'name': point_name, 'lat': lat + lat_hem, 'lon': lon + lon_hem})
+    point_list.append({'name': point_name, 'Lat': str(lat) + lat_hem, 'Long': str(lon) + lon_hem})
 
 def clear():
     if sys.platform.startswith('linux'):
