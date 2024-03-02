@@ -19,13 +19,14 @@ def main():
     port = get_port()
     point_list = []
 
+
     # Check if output file exists, warn user if so
     if os.path.isfile(f"./{OUTPUT_FILENAME}"):
         clear()
-        console.print(f"[bold red]{'OUTPUT FILE (LOG.CSV) ALREADY EXISTS, ENSURE ANY DATA FROM PREVIOUS RECORDINGS IS SAVED ELSEWHERE AS IT WILL BE OVERWRITTEN (If you do not care about the data currently in the file, then ignore this warning and continue)'}")
-        response = Confirm.ask("Do you want to overwrite the data?")
-        if not response:
-            quit()
+        console.print(f"[bold red]{'Output file (LOG.CSV) already exists.'}")
+        response = Confirm.ask("Do you want to continue where you last left off (answer 'N' to overwrite the data and start again)?")
+        if response:
+            read_points(point_list)
 
     while True:
         
@@ -39,14 +40,47 @@ def main():
         port.close()
 
 
+def read_points(point_list):
+    
+    new_points = []
+
+    with open(OUTPUT_FILENAME, newline='') as fp:
+        reader = csv.DictReader(fp)
+        for row in reader:
+            new_points.append(row)
+
+    point_list += new_points
+
+
+def DDM_deg_min_sec(ddm: str) -> float:
+    # Example input format: 'ddmm.mmmmmmm' or 'dddmm.mmmmmmm'
+    # Extract degrees and decimal minutes parts
+    if len(ddm) == 10:  # 'ddmm.mmmmmmm'
+        degrees = int(ddm[:2])
+        minutes = float(ddm[2:])
+    elif len(ddm) == 11:  # 'dddmm.mmmmmmm'
+        degrees = int(ddm[:3])
+        minutes = float(ddm[3:])
+    else:
+        raise ValueError("Invalid input format")
+
+    # Calculate seconds
+    seconds = (minutes - int(minutes)) * 60.0
+
+    # Combine everything to get the result in the format dddmmss.ssss
+    result = degrees * 10000.0 + int(minutes) * 100.0 + seconds
+    return result
+
+
 def handle_input(point_list, port) -> bool:
     user_input = readkey()
+    
     # Quit handler
     if user_input == 'q':
         save_exit(point_list)
         return False
     # Print new point prompt
-    elif user_input == '\n':
+    elif '\n' in user_input or '\r' in user_input:
         clear()
         new_point(point_list, port)
     # Enter delete mode
@@ -56,6 +90,9 @@ def handle_input(point_list, port) -> bool:
             point_num = int(input())
         except ValueError as e:
             # Cancel if no value was input
+            return True
+        except Exception:
+            # Catch general errors
             return True
         if point_num == 0:
             # Cancel if user entered 0
@@ -91,10 +128,12 @@ def render(point_list) -> str:
 
 def new_point(point_list : list, port) -> None:
     if not port:
-        console.print("[bold red] COULDN'T CONNECT TO GPS, PRESS ANY KEY TO CONTINUE")
+        # Try to get port again
         port = get_port()
-        readkey()
-        return
+        if not port:
+            console.print("[bold red] COULDN'T CONNECT TO GPS, PRESS ANY KEY TO CONTINUE")
+            readkey()
+            return
 
     console.print("[bold yellow] Creating New Point\n")
     console.print("     Note: type [italic][bold]exit[/bold][/italic] and press enter to cancel creating a new point.\n")
@@ -111,11 +150,17 @@ def new_point(point_list : list, port) -> None:
         gnrmc_list = gnrmc.split(',')
 
     # Get position info
-    lat = gnrmc_list[3]
-    lat_hem = gnrmc_list[4]
+    try:
+        lat = DDM_deg_min_sec(gnrmc_list[3])
+        lat_hem = gnrmc_list[4]
+    except:
+        return
 
-    lon = gnrmc_list[5]
-    lon_hem = gnrmc_list[6]
+    try:
+        lon = DDM_deg_min_sec(gnrmc_list[5])
+        lon_hem = gnrmc_list[6]
+    except:
+        return
 
     #console.print(gnrmc_list)
     console.print(f" [green]Lat: {lat}{lat_hem}   Lon: {lon}{lon_hem}")
@@ -136,11 +181,14 @@ def clear():
 
 def save_exit(point_list):
 
-    if len(point_list) > 0:
-        with open(OUTPUT_FILENAME, "w") as fp:
+    with open(OUTPUT_FILENAME, 'w') as fp:
+        # Only write to file if the length is greater than 0 (allows user to clear the file)
+        if len(point_list) > 0:
             writer = csv.DictWriter(fp, fieldnames=list(point_list[0].keys()))
             writer.writeheader() # Write header
             writer.writerows(point_list) # Write data
+        
+
 
 
 def get_port():
